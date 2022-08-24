@@ -176,12 +176,29 @@ resource "aws_api_gateway_deployment" "apideploy" {
 }
 
 
+resource "aws_lambda_permission" "apigw" {
+   statement_id  = "AllowAPIGatewayInvoke"
+   action        = "lambda:InvokeFunction"
+   function_name = aws_lambda_function.lambda.function_name
+   principal     = "apigateway.amazonaws.com"
+
+   source_arn = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/*"
+}
 
 
-//----------------------------Test Code--------------------------------------//
+output "base_url" {
+  value = aws_api_gateway_deployment.apideploy.invoke_url
+}
+
+output "api_token" {
+  value = "token-${random_id.id.hex}"
+}
+
+
+//------------------------------Updated Code----------------------------------//
 
 resource "aws_acm_certificate" "api" {
-  domain_name       = "benthonlabs.com"
+  domain_name       = "api.benthonlabs.com"
   validation_method = "DNS"
 }
 
@@ -216,7 +233,7 @@ resource "aws_acm_certificate_validation" "api" {
 
 
 resource "aws_apigatewayv2_domain_name" "api" {
-  domain_name = "benthonlabs.com"
+  domain_name = "api.benthonlabs.com"
 
   domain_name_configuration {
     certificate_arn = aws_acm_certificate.api.arn
@@ -237,27 +254,6 @@ resource "aws_route53_record" "api" {
     zone_id                = aws_apigatewayv2_domain_name.api.domain_name_configuration[0].hosted_zone_id
     evaluate_target_health = false
   }
-}
-
-
-//----------------------------Test Code Finish---------------------------------//
-
-resource "aws_lambda_permission" "apigw" {
-   statement_id  = "AllowAPIGatewayInvoke"
-   action        = "lambda:InvokeFunction"
-   function_name = aws_lambda_function.lambda.function_name
-   principal     = "apigateway.amazonaws.com"
-
-   source_arn = "${aws_api_gateway_rest_api.apiLambda.execution_arn}/*/*"
-}
-
-
-output "base_url" {
-  value = aws_api_gateway_deployment.apideploy.invoke_url
-}
-
-output "api_token" {
-  value = "token-${random_id.id.hex}"
 }
 
 output "name" {
