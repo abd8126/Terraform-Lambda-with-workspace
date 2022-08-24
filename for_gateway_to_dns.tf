@@ -198,7 +198,7 @@ output "api_token" {
 //------------------------------Updated Code----------------------------------//
 
 resource "aws_acm_certificate" "api" {
-  domain_name       = "api.benthonlabs.com"
+  domain_name       = "${terraform.workspace}.benthonlabs.com"
   validation_method = "DNS"
 }
 
@@ -233,7 +233,7 @@ resource "aws_acm_certificate_validation" "api" {
 
 
 resource "aws_apigatewayv2_domain_name" "api" {
-  domain_name = "api.benthonlabs.com"
+  domain_name = "${terraform.workspace}.benthonlabs.com"
 
   domain_name_configuration {
     certificate_arn = aws_acm_certificate.api.arn
@@ -256,11 +256,27 @@ resource "aws_route53_record" "api" {
   }
 }
 
+resource "aws_apigatewayv2_api_mapping" "api_custom_config" {
+  api_id      = aws_api_gateway_deployment.apideploy.rest_api_id
+  domain_name = aws_apigatewayv2_domain_name.api.domain_name
+  stage       = aws_api_gateway_deployment.apideploy.stage_name
+}
+
+
 output "name" {
   value = aws_apigatewayv2_domain_name.api.domain_name_configuration[0].target_domain_name
 }
 
 output "zone_id" {
   value = aws_apigatewayv2_domain_name.api.domain_name_configuration[0].hosted_zone_id
+}
+
+output "api_gateway" {
+  value = aws_api_gateway_rest_api.apiLambda.name
+}
+
+
+output "api_gateway_stage_name" {
+  value = aws_api_gateway_deployment.apideploy.stage_name
 }
     
